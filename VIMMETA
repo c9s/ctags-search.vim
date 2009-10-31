@@ -1,0 +1,20 @@
+
+=name           ctags-search.vim
+
+=author         Cornelius
+
+=version_from   vimlib/plugin/ctags-search.vim
+
+=vim_version    >= 7.0
+
+=type           plugin
+
+=dependency
+
+    search-window.vim
+        | autoload/swindow.vim    | http://github.com/c9s/search-window.vim/raw/master/vimlib/autoload/swindow.vim
+
+=script
+
+=repository http://github.com/c9s/ctags-search.vim
+

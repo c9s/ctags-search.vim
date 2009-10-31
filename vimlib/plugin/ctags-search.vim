@@ -10,6 +10,8 @@
 "
 "   Enter to goto tag
 "   t to open the tag in new tabpage
+"
+"=VERSION 0.2
 
 let s:CtagsWindow = copy( swindow#class )
 let s:CtagsWindow.resource = [ ]

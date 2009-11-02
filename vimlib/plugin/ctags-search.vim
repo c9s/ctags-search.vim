@@ -14,10 +14,8 @@
 "=VERSION 0.2
 
 let s:CtagsWindow = copy( swindow#class )
-let s:CtagsWindow.resource = [ ]
 let s:CtagsWindow.default_ctags = 'tags'  " default ctags filename to write 
 let s:CtagsWindow.tagfiles = [ "tags" ]   " for searching tags file in different names
-let s:CtagsWindow.max_item = 100
 
 fun! s:echo(msg)
   echomsg a:msg

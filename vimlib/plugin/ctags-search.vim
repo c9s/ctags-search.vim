@@ -42,33 +42,22 @@ fun! s:CtagsWindow.input_path_for_ctags()
   endif
 endf
 
-fun! s:CtagsWindow.init_buffer()
-  setfiletype ctagsearch
+fun! s:CtagsWindow.index()
   let file = self.find_ctags_file()
-
   if ! filereadable(file)
     let file = self.input_path_for_ctags()
   endif
-
   if ! filereadable(file)
-    throw "ERROR: not ctags file specified"
+    return []
+    " throw "ERROR: not ctags file specified"
   endif
+  return self.read_tags(file)   " XXX let it be configurable
+endf
 
-  cal s:echo( "Loading TagList..." )
-  let self.resource = self.read_tags(file)   " XXX let it be configurable
-  cal s:echo( "Rendering..." )
-
-  let matches = copy( self.resource )
-
-  if len( matches ) > self.max_item 
-    let matches = remove( matches ,0, self.max_item) 
-  endif
-
-  cal self.render_result( matches )  " just take out first 100 items
-  cal s:echo( "Ready" )
-  autocmd CursorMovedI <buffer> call s:CtagsWindow.update_search()
-
+fun! s:CtagsWindow.init_buffer()
+  setfiletype ctagsearch
   silent file CtagsSearch
+  autocmd CursorMovedI <buffer> call s:CtagsWindow.update_search()
 endf
 
 fun! s:CtagsWindow.generate_ctags_file(path)
@@ -93,24 +82,6 @@ endf
 fun! s:CtagsWindow.buffer_reload_init()
   call setline(1,'')
   call cursor(1,1)
-  startinsert
-endf
-
-fun! s:CtagsWindow.update_search()
-  let pattern = getline('.')
-  let matches = filter( copy( self.resource )  , 'v:val =~ ''' . pattern . '''' )
-  if len(matches) > 100 
-    call remove( matches , 0 , 100 )
-  endif
-
-  let old = getpos('.')
-
-  if len(matches) > 0 
-    silent 2,$delete _
-    cal self.render_result( matches )
-  endif
-
-  cal setpos('.',old)
   startinsert
 endf
 

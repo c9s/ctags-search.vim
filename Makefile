@@ -223,3 +223,111 @@ version:
 	@echo version - $(MAKEFILE_VERSION)
 
 # }}}
+mfile ]] ; then \
+			$(call install_file,$$vimfile) ; fi ; done
+
+install: init-runtime bundle pure-install record
+
+
+uninstall-files:
+	@echo "Uninstalling"
+	@if [[ -n "$(DIRS)" ]] ; then find $(DIRS) -type f | while read file ; do \
+			rm -fv $(VIMRUNTIME)/$$file ; done ; fi
+	@echo "$(FILES)" | while read vimfile ; do \
+		if [[ -n $$vimfile ]] ; then \
+			$(call unlink_file,$$vimfile) ; fi ; done
+
+uninstall: uninstall-files rmrecord
+
+link: init-runtime
+	@echo "Linking"
+	@if [[ -n "$(DIRS)" ]]; then find $(DIRS) -type f | while read file ; do \
+			ln -sfv $(PWD)/$$file $(VIMRUNTIME)/$$file ; done ; fi
+	@echo "$(FILES)" | while read vimfile ; do \
+		if [[ -n $$vimfile ]] ; then \
+			$(call link_file,$$vimfile) ; fi ; done
+
+mkfilelist:
+	@echo $(NAME) > $(RECORD_FILE)
+	@echo $(VERSION) >> $(RECORD_FILE)
+	@if [[ -n "$(DIRS)" ]] ; then find $(DIRS) -type f | while read file ; do \
+			echo $(VIMRUNTIME)/$$file >> $(RECORD_FILE) ; done ; fi
+	@echo "$(FILES)" | while read vimfile ; do \
+		if [[ -n $$vimfile ]] ; then \
+			$(call record_file,$$vimfile,$(RECORD_FILE)) ; fi ; done
+
+vimball-edit:
+	find $(DIRS) -type f > .tmp_list
+	vim .tmp_list
+	vim .tmp_list -c ":MkVimball $(NAME)-$(VERSION)" -c "q"
+	@rm -vf .tmp_list
+	@echo "$(NAME)-$(VERSION).vba is ready."
+
+vimball:
+	find $(DIRS) -type f > .tmp_list
+	vim .tmp_list -c ":MkVimball $(NAME)-$(VERSION)" -c "q"
+	@rm -vf .tmp_list
+	@echo "$(NAME)-$(VERSION).vba is ready."
+
+mkrecordscript:
+		@echo ""  >  $(RECORD_SCRIPT)
+		@echo "fun! s:mkmd5(file)"  >> $(RECORD_SCRIPT)
+		@echo "  if executable('md5')"  >> $(RECORD_SCRIPT)
+		@echo "    return system('cat ' . a:file . ' | md5')"  >> $(RECORD_SCRIPT)
+		@echo "  else"  >> $(RECORD_SCRIPT)
+		@echo "    return \"\""  >> $(RECORD_SCRIPT)
+		@echo "  endif"  >> $(RECORD_SCRIPT)
+		@echo "endf"  >> $(RECORD_SCRIPT)
+		@echo "let files = readfile('.record')"  >> $(RECORD_SCRIPT)
+		@echo "let package_name = remove(files,0)"  >> $(RECORD_SCRIPT)
+		@echo "let script_version      = remove(files,0)"  >> $(RECORD_SCRIPT)
+		@echo "let record = { 'version' : 0.3 , 'generated_by': 'Vim-Makefile' , 'script_version': script_version , 'install_type' : 'makefile' , 'package' : package_name , 'files': [  ] }"  >> $(RECORD_SCRIPT)
+		@echo "for file in files "  >> $(RECORD_SCRIPT)
+		@echo "  let md5 = s:mkmd5(file)"  >> $(RECORD_SCRIPT)
+		@echo "  cal add( record.files , {  'checksum': md5 , 'file': file  } )"  >> $(RECORD_SCRIPT)
+		@echo "endfor"  >> $(RECORD_SCRIPT)
+		@echo "redir => output"  >> $(RECORD_SCRIPT)
+		@echo "silent echon record"  >> $(RECORD_SCRIPT)
+		@echo "redir END"  >> $(RECORD_SCRIPT)
+		@echo "let content = join(split(output,\"\\\\n\"),'')"  >> $(RECORD_SCRIPT)
+		@echo "let record_file = expand('~/.vim/record/' . package_name )"  >> $(RECORD_SCRIPT)
+		@echo "cal writefile( [content] , record_file )"  >> $(RECORD_SCRIPT)
+		@echo "echo \"Done\""  >> $(RECORD_SCRIPT)
+
+
+record: mkfilelist mkrecordscript
+	vim --noplugin -V10install.log -c "so $(RECORD_SCRIPT)" -c "q"
+	@echo "Vim script record making log: install.log"
+
+rmrecord:
+	@echo "Removing Record"
+	@rm -vf $(VIMRUNTIME)/record/$(NAME)
+
+clean: clean-bundle-deps
+	@rm -vf $(RECORD_FILE)
+	@rm -vf $(RECORD_SCRIPT)
+	@rm -vf install.log
+	@rm -vf *.tar.gz
+
+clean-bundle-deps:
+	@echo "Removing Bundled scripts..."
+	@if [[ -e .bundlefiles ]] ; then \
+		rm -fv `echo \`cat .bundlefiles\``; \
+	fi
+	@rm -fv .bundlefiles
+
+update:
+	@echo "Updating Makefile..."
+	@URL=http://github.com/c9s/vim-makefile/raw/master/Makefile ; \
+	if [[ -n `which curl` ]]; then \
+		curl $$URL -o Makefile ; \
+	if [[ -n `which wget` ]]; then \
+		wget -c $$URL ; \
+	elif [[ -n `which fetch` ]]; then \
+		fetch $$URL ; \
+	fi
+
+version:
+	@echo version - $(MAKEFILE_VERSION)
+
+# }}}
